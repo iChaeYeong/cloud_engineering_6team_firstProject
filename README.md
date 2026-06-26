@@ -1,3 +1,4 @@
+# 인뿌볼
 ## cloud_engineering_6team_firstProject
 ## 멋쟁이 사자처럼 클라우드 엔지니어링 부트캠프 6조 1차 프로젝트
 
@@ -25,12 +26,11 @@
 > 팀원: 이채영, 강진호
 
 ### 2. 주제
-이상거래 탐지 시스템 
-ex. 약 100만원 이상 이체가 연속으로  발생 시  거래 정지
-<img width="1003" height="722" alt="image" src="https://github.com/user-attachments/assets/bb6b1512-3c12-44e6-bf93-112f3bcd7c3a" />
+계좌이체 및 내역조회
+<img width="1407" height="687" alt="image" src="https://github.com/user-attachments/assets/be407f65-abc0-4ed9-b0c9-0b3c66d8e055" />
 
 - 세부 기능
-	1. 실시간 거래내역 조회
-	2. 이상 거래 발생시 DB에 로그 저장
-	3. DB에 동일한 계좌 반복 저장 시 해당 계좌 정지 
+	1. 사용자별 계좌번호, 계좌잔액 조회
+	2. 계좌 이체
+	3. 이체내역 조회 
 

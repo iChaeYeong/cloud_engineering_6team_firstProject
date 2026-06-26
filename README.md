@@ -27,10 +27,20 @@
 
 ### 2. 주제
 계좌이체 및 내역조회
-<img width="1407" height="687" alt="image" src="https://github.com/user-attachments/assets/be407f65-abc0-4ed9-b0c9-0b3c66d8e055" />
 
 - 세부 기능
 	1. 사용자별 계좌번호, 계좌잔액 조회
 	2. 계좌 이체
 	3. 이체내역 조회 
+
+
+### 화면 구현
+<img width="1407" height="687" alt="image" src="https://github.com/user-attachments/assets/be407f65-abc0-4ed9-b0c9-0b3c66d8e055" />
+
+### 아키텍쳐
+<img width="1637" height="770" alt="image" src="https://github.com/user-attachments/assets/fdf66683-abe9-4ca5-976e-b6deb722b63b" />
+
+### ERD
+<img width="1388" height="194" alt="image" src="https://github.com/user-attachments/assets/04d636ab-553c-414b-b622-f35cbecee720" />
+
 

@@ -41,6 +41,7 @@
 <img width="1637" height="770" alt="image" src="https://github.com/user-attachments/assets/fdf66683-abe9-4ca5-976e-b6deb722b63b" />
 
 ### ERD
-<img width="1388" height="194" alt="image" src="https://github.com/user-attachments/assets/04d636ab-553c-414b-b622-f35cbecee720" />
+<img width="1659" height="219" alt="image" src="https://github.com/user-attachments/assets/edfad7c7-9989-4f9e-932d-fa302355453b" />
+
 
 

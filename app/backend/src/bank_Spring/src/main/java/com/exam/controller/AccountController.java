@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/accounts")
+@RequestMapping("/api/accounts")
 public class AccountController {
 
     AccountService accountService;
@@ -23,7 +23,7 @@ public class AccountController {
     }
 
     // 계좌 상세 조회
-    @GetMapping("/{accountNo}")
+    @GetMapping("/accounts")
     public AccountDTO accountDetail(@PathVariable String accountNo) {
         return accountService.findByAccountNo(accountNo);
     }

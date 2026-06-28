@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/auth")
 public class UserController {
 
     UserService userService;

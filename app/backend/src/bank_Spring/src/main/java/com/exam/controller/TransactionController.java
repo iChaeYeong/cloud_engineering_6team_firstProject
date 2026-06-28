@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping
 public class TransactionController {
 
     TransactionService transactionService;
@@ -20,7 +20,7 @@ public class TransactionController {
 
     // 계좌 거래내역 조회 (입금/출금 구분은 프론트에서 accountNo 기준으로 처리)
     @GetMapping("/transactions/{accountNo}")
-    public List<TransactionDTO> transactions(@RequestParam String accountNo) {
+    public List<TransactionDTO> transactions(@PathVariable String accountNo) {
         return transactionService.findByAccountNo(accountNo);
     }
 

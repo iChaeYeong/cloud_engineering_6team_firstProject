@@ -43,7 +43,7 @@ function TransferContent() {
     try {
       const data = await transfer(frmAccountNo, toAccountNo, amountNum);
       if (data.success) {
-        router.push(`/transactions?account=${frmAccountNo}`);
+        router.push("/accounts");
       } else {
         setErrorMessage(data.message ?? "이체에 실패했습니다.");
       }

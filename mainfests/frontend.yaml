@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: moonjh1/bank-frontend:v1
+          image: moonjh1/bank-frontend:dev
           imagePullPolicy: Always
           ports:
             - containerPort: 3000

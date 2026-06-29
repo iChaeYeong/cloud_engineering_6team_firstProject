@@ -1,4 +1,4 @@
-const BASE_URL = "http://springboot-service:8080";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
   return fetch(`${BASE_URL}${path}`, {

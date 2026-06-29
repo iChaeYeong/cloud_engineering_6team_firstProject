@@ -1,6 +1,3 @@
-create database findb;
-use findb;
-
 CREATE TABLE user_info (
     user_id VARCHAR(20) PRIMARY KEY,
     user_nm VARCHAR(20) NOT NULL,

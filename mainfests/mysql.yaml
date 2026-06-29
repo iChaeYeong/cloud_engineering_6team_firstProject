@@ -2,7 +2,7 @@
 
 # ==================== DEV ====================
 
-# namespace 부분은 삭제했습니다 namespace.yaml이랑 내용이 겹쳐서 prod부분도 마찬가지
+# namespace 부분은 삭제했습니다 namespace.yaml이랑 내용이 겹쳐서 prod부분도
 apiVersion: v1
 kind: Secret
 metadata:

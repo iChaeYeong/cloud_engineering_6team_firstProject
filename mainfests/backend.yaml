@@ -14,7 +14,8 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080  
-  type: ClusterIP  # NodePort 삭제, ClusterIP로 변경
+      nodePort: 30091
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -79,7 +80,8 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
-  type: ClusterIP  # NodePort 삭제, ClusterIP로 변경
+      nodePort: 30090
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment

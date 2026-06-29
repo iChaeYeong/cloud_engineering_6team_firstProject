@@ -1,6 +1,59 @@
-﻿import Link from "next/link";
+"use client";
 
-export default function TransferPage() {
+import Link from "next/link";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getAccounts } from "@/lib/api/accounts";
+import { transfer } from "@/lib/api/transfer";
+import type { AccountDTO } from "@/lib/data/types";
+
+function TransferContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialFrom = searchParams.get("from") ?? "";
+
+  const [accounts, setAccounts] = useState<AccountDTO[]>([]);
+  const [frmAccountNo, setFrmAccountNo] = useState(initialFrom);
+  const [toAccountNo, setToAccountNo] = useState("");
+  const [amount, setAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    getAccounts()
+      .then((data) => {
+        setAccounts(data);
+        if (!initialFrom && data.length > 0) setFrmAccountNo(data[0].accountNo);
+      })
+      .catch(() => {});
+  }, [initialFrom]);
+
+  const handleTransfer = async () => {
+    if (!frmAccountNo || !toAccountNo || !amount) {
+      setErrorMessage("모든 항목을 입력하세요.");
+      return;
+    }
+    const amountNum = parseInt(amount, 10);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setErrorMessage("유효한 금액을 입력하세요.");
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const data = await transfer(frmAccountNo, toAccountNo, amountNum);
+      if (data.success) {
+        router.push(`/transactions?account=${frmAccountNo}`);
+      } else {
+        setErrorMessage(data.message ?? "이체에 실패했습니다.");
+      }
+    } catch {
+      setErrorMessage("서버에 연결할 수 없습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="page narrow">
       <nav className="nav">
@@ -18,36 +71,53 @@ export default function TransferPage() {
 
         <label>
           출금 계좌
-          <select defaultValue="100-200-300001">
-            <option value="100-200-300001">100-200-300001 / 입출금 통장</option>
-            <option value="100-200-300002">100-200-300002 / 생활비 통장</option>
+          <select value={frmAccountNo} onChange={(e) => setFrmAccountNo(e.target.value)}>
+            {accounts.map((a) => (
+              <option key={a.accountNo} value={a.accountNo}>
+                {a.accountNo} / {a.accountNm} (잔액: {a.balance.toLocaleString()}원)
+              </option>
+            ))}
           </select>
         </label>
 
         <label>
           입금 계좌
-          <input placeholder="입금 계좌번호 입력" />
+          <input
+            placeholder="입금 계좌번호 입력"
+            value={toAccountNo}
+            onChange={(e) => setToAccountNo(e.target.value)}
+          />
         </label>
 
         <label>
           이체 금액
-          <input type="number" placeholder="금액 입력" />
+          <input
+            type="number"
+            placeholder="금액 입력"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </label>
 
-        <label>
-          메모
-          <input placeholder="선택 입력" />
-        </label>
+        {errorMessage && <p className="errorText">{errorMessage}</p>}
 
         <div className="buttonRow">
-          <Link className="primaryButton" href="/transactions">
-            이체하기
-          </Link>
+          <button className="primaryButton" onClick={handleTransfer} disabled={isLoading}>
+            {isLoading ? "처리 중..." : "이체하기"}
+          </button>
           <Link className="secondaryButton" href="/accounts">
             취소
           </Link>
         </div>
       </section>
     </main>
+  );
+}
+
+export default function TransferPage() {
+  return (
+    <Suspense fallback={<p className="muted" style={{ padding: "2rem" }}>로딩 중...</p>}>
+      <TransferContent />
+    </Suspense>
   );
 }

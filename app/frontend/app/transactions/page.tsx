@@ -1,38 +1,30 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { getTransactions } from "@/lib/api/transactions";
+import type { TransactionDTO } from "@/lib/data/types";
 
 type TransactionStatus = "입금" | "출금";
 
-type ApiTransaction = {
-  tranId: number;
-  frmAccountNo: string;
-  toAccountNo: string;
-  tranAmt: number;
-  tranDt: string;
-};
+function TransactionsContent() {
+  const searchParams = useSearchParams();
+  const initialAccount = searchParams.get("account") ?? "";
 
-export default function TransactionsPage() {
-  const [accountNo, setAccountNo] = useState("110-1234-4444");
-  const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
+  const [accountNo, setAccountNo] = useState(initialAccount);
+  const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
   const [statusFilter, setStatusFilter] = useState<"전체" | TransactionStatus>("전체");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (account: string) => {
+    if (!account) return;
     setIsLoading(true);
     setErrorMessage("");
-
     try {
-      const response = await fetch(`http://localhost:8080/transactions/${accountNo}`);
-
-      if (!response.ok) {
-        throw new Error("거래내역 조회에 실패했습니다.");
-      }
-
-      const data: ApiTransaction[] = await response.json();
+      const data = await getTransactions(account);
       setTransactions(data);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
@@ -42,13 +34,13 @@ export default function TransactionsPage() {
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, []);
+    if (initialAccount) fetchTransactions(initialAccount);
+  }, [initialAccount]);
 
   const filteredTransactions = useMemo(() => {
     return transactions
-      .filter((transaction) => {
-        const status: TransactionStatus = transaction.frmAccountNo === accountNo ? "출금" : "입금";
+      .filter((t) => {
+        const status: TransactionStatus = t.frmAccountNo === accountNo ? "출금" : "입금";
         return statusFilter === "전체" || status === statusFilter;
       })
       .sort((a, b) => {
@@ -78,18 +70,24 @@ export default function TransactionsPage() {
           <div className="filterBox">
             <input
               value={accountNo}
-              onChange={(event) => setAccountNo(event.target.value)}
+              onChange={(e) => setAccountNo(e.target.value)}
               placeholder="계좌번호"
             />
-            <button type="button" onClick={fetchTransactions}>
+            <button type="button" onClick={() => fetchTransactions(accountNo)}>
               조회
             </button>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "전체" | TransactionStatus)}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "전체" | TransactionStatus)}
+            >
               <option value="전체">전체</option>
               <option value="입금">입금</option>
               <option value="출금">출금</option>
             </select>
-            <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "desc" | "asc")}>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "desc" | "asc")}
+            >
               <option value="desc">시간 내림차순</option>
               <option value="asc">시간 오름차순</option>
             </select>
@@ -111,15 +109,14 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((transaction) => {
-                const status: TransactionStatus = transaction.frmAccountNo === accountNo ? "출금" : "입금";
-
+              {filteredTransactions.map((t) => {
+                const status: TransactionStatus = t.frmAccountNo === accountNo ? "출금" : "입금";
                 return (
-                  <tr key={transaction.tranId}>
-                    <td>{transaction.tranDt}</td>
-                    <td>{transaction.frmAccountNo}</td>
-                    <td>{transaction.toAccountNo}</td>
-                    <td>{transaction.tranAmt.toLocaleString()}원</td>
+                  <tr key={t.tranId}>
+                    <td>{t.tranDt}</td>
+                    <td>{t.frmAccountNo}</td>
+                    <td>{t.toAccountNo}</td>
+                    <td>{t.tranAmt.toLocaleString()}원</td>
                     <td>
                       <span className={status === "입금" ? "statusBadge deposit" : "statusBadge withdraw"}>
                         {status}
@@ -133,5 +130,13 @@ export default function TransactionsPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<p className="muted" style={{ padding: "2rem" }}>로딩 중...</p>}>
+      <TransactionsContent />
+    </Suspense>
   );
 }

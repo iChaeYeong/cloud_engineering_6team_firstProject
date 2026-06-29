@@ -1,141 +1,183 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import SiteNav from "@/components/SiteNav";
+import { getAccounts } from "@/lib/api/accounts";
 import { getTransactions } from "@/lib/api/transactions";
-import type { TransactionDTO } from "@/lib/data/types";
+import type { AccountDTO, TransactionDTO } from "@/lib/data/types";
 
-type TransactionStatus = "입금" | "출금";
+type Filter = "전체" | "입금" | "출금";
+
+const ALL = "전체";
 
 function TransactionsContent() {
   const searchParams = useSearchParams();
-  const initialAccount = searchParams.get("account") ?? "";
+  const initialAccount = searchParams.get("account") ?? ALL;
 
-  const [accountNo, setAccountNo] = useState(initialAccount);
+  const [accounts, setAccounts] = useState<AccountDTO[]>([]);
+  const [selected, setSelected] = useState(initialAccount);
   const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
-  const [statusFilter, setStatusFilter] = useState<"전체" | TransactionStatus>("전체");
+  const [filter, setFilter] = useState<Filter>("전체");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const fetchTransactions = async (account: string) => {
-    if (!account) return;
-    setIsLoading(true);
-    setErrorMessage("");
+  const myAccountNos = useMemo(
+    () => new Set(accounts.map((a) => a.accountNo)),
+    [accounts]
+  );
+
+  const getDirection = (t: TransactionDTO): "입금" | "출금" =>
+    myAccountNos.has(t.frmAccountNo) ? "출금" : "입금";
+
+  const fetchFor = async (account: string, accs: AccountDTO[]) => {
+    setLoading(true);
+    setError("");
     try {
-      const data = await getTransactions(account);
-      setTransactions(data);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
+      if (account === ALL) {
+        const results = await Promise.all(accs.map((a) => getTransactions(a.accountNo)));
+        const seen = new Map<number, TransactionDTO>();
+        results.flat().forEach((t) => seen.set(t.tranId, t));
+        setTransactions([...seen.values()]);
+      } else {
+        setTransactions(await getTransactions(account));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (initialAccount) fetchTransactions(initialAccount);
-  }, [initialAccount]);
+    getAccounts()
+      .then((accs) => {
+        setAccounts(accs);
+        fetchFor(initialAccount, accs);
+      })
+      .catch(() => setError("계좌 정보를 불러오지 못했습니다."));
+  }, []);
 
-  const filteredTransactions = useMemo(() => {
+  const handleSelect = (account: string) => {
+    setSelected(account);
+    fetchFor(account, accounts);
+  };
+
+  const rows = useMemo(() => {
     return transactions
       .filter((t) => {
-        const status: TransactionStatus = t.frmAccountNo === accountNo ? "출금" : "입금";
-        return statusFilter === "전체" || status === statusFilter;
+        const type = getDirection(t);
+        return filter === "전체" || type === filter;
       })
       .sort((a, b) => {
-        const left = new Date(a.tranDt).getTime();
-        const right = new Date(b.tranDt).getTime();
-        return sortOrder === "desc" ? right - left : left - right;
+        const d = new Date(a.tranDt).getTime() - new Date(b.tranDt).getTime();
+        return sortOrder === "desc" ? -d : d;
       });
-  }, [transactions, statusFilter, sortOrder, accountNo]);
+  }, [transactions, filter, sortOrder, myAccountNos]);
+
+  const selectedLabel =
+    selected === ALL
+      ? "전체 계좌"
+      : accounts.find((a) => a.accountNo === selected)?.accountNm ?? selected;
 
   return (
-    <main className="page">
-      <nav className="nav">
-        <strong>거래 내역조회</strong>
-        <div>
-          <Link href="/accounts">계좌</Link>
-          <Link href="/transfer">이체</Link>
-        </div>
-      </nav>
+    <>
+      <SiteNav active="transactions" />
+      <div className="pageWrap">
+        <h1 className="pageTitle">거래내역</h1>
+        <p className="pageSubtitle">조회할 계좌를 선택하세요.</p>
 
-      <section className="card">
-        <div className="tableHeader">
-          <div>
-            <p className="eyebrow">Transactions</p>
-            <h1>거래 내역조회</h1>
-            <p className="muted">입금/출금 상태별 필터와 시간 정렬을 제공합니다.</p>
+        <div className="surface">
+          <div className="tableSection">
+            <div className="tableSectionHeader">
+              <span className="tableSectionTitle">{selectedLabel}</span>
+              <div className="filterRow">
+                <select
+                  className="filterSelect"
+                  value={selected}
+                  onChange={(e) => handleSelect(e.target.value)}
+                  style={{ minWidth: 200 }}
+                >
+                  <option value={ALL}>전체 계좌</option>
+                  {accounts.map((a) => (
+                    <option key={a.accountNo} value={a.accountNo}>
+                      {a.accountNm} · {a.accountNo}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="filterSelect"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as Filter)}
+                >
+                  <option value="전체">전체</option>
+                  <option value="입금">입금</option>
+                  <option value="출금">출금</option>
+                </select>
+                <select
+                  className="filterSelect"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as "desc" | "asc")}
+                >
+                  <option value="desc">최신순</option>
+                  <option value="asc">오래된순</option>
+                </select>
+              </div>
+            </div>
+
+            {loading && <p className="loadingMsg">불러오는 중...</p>}
+            {error && <p className="errorMsg" style={{ padding: "12px 18px" }}>{error}</p>}
+
+            {!loading && (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>일시</th>
+                      <th>출금 계좌</th>
+                      <th>입금 계좌</th>
+                      <th>금액</th>
+                      <th>구분</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="emptyMsg">거래내역이 없습니다.</td>
+                      </tr>
+                    ) : (
+                      rows.map((t) => {
+                        const type = getDirection(t);
+                        return (
+                          <tr key={t.tranId}>
+                            <td className="tdMono">{t.tranDt}</td>
+                            <td className="tdMono">{t.frmAccountNo}</td>
+                            <td className="tdMono">{t.toAccountNo}</td>
+                            <td className="tdAmount">{t.tranAmt.toLocaleString()}원</td>
+                            <td>
+                              <span className={type === "입금" ? "badge badgeGreen" : "badge badgeRed"}>
+                                {type}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-          <div className="filterBox">
-            <input
-              value={accountNo}
-              onChange={(e) => setAccountNo(e.target.value)}
-              placeholder="계좌번호"
-            />
-            <button type="button" onClick={() => fetchTransactions(accountNo)}>
-              조회
-            </button>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "전체" | TransactionStatus)}
-            >
-              <option value="전체">전체</option>
-              <option value="입금">입금</option>
-              <option value="출금">출금</option>
-            </select>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as "desc" | "asc")}
-            >
-              <option value="desc">시간 내림차순</option>
-              <option value="asc">시간 오름차순</option>
-            </select>
-          </div>
         </div>
-
-        {isLoading && <p className="muted">거래내역을 불러오는 중입니다...</p>}
-        {errorMessage && <p className="errorText">{errorMessage}</p>}
-
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>시간</th>
-                <th>출금 계좌</th>
-                <th>입금 계좌</th>
-                <th>금액</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((t) => {
-                const status: TransactionStatus = t.frmAccountNo === accountNo ? "출금" : "입금";
-                return (
-                  <tr key={t.tranId}>
-                    <td>{t.tranDt}</td>
-                    <td>{t.frmAccountNo}</td>
-                    <td>{t.toAccountNo}</td>
-                    <td>{t.tranAmt.toLocaleString()}원</td>
-                    <td>
-                      <span className={status === "입금" ? "statusBadge deposit" : "statusBadge withdraw"}>
-                        {status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+      </div>
+    </>
   );
 }
 
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<p className="muted" style={{ padding: "2rem" }}>로딩 중...</p>}>
+    <Suspense fallback={<p className="loadingMsg" style={{ padding: "32px 24px" }}>로딩 중...</p>}>
       <TransactionsContent />
     </Suspense>
   );

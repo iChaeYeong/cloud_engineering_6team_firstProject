@@ -2,6 +2,7 @@ package com.exam.controller;
 
 import com.exam.dto.UserDTO;
 import com.exam.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,13 +20,14 @@ public class UserController {
 
     // 로그인
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody UserDTO userDTO) {
+    public Map<String, Object> login(@RequestBody UserDTO userDTO, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         UserDTO user = userService.login(userDTO.getUserId(), userDTO.getPwd());
         if (user == null) {
             result.put("success", false);
             result.put("message", "아이디 또는 비밀번호가 올바르지 않습니다.");
         } else {
+            session.setAttribute("loginUser", user);
             result.put("success", true);
             result.put("user", user);
         }

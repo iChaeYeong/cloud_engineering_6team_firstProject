@@ -1,0 +1,14 @@
+﻿# dependencies
+node_modules/
+app/frontend/node_modules/
+
+# Next.js build output
+.next/
+app/frontend/.next/
+
+# local env / secrets
+.env
+.env.*
+
+# accidental root npm lockfile
+/package-lock.json

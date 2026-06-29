@@ -1,13 +1,15 @@
 package com.exam.controller;
 
 import com.exam.dto.AccountDTO;
+import com.exam.dto.UserDTO;
 import com.exam.service.AccountService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/accounts")
 public class AccountController {
 
     AccountService accountService;
@@ -16,15 +18,13 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // 사용자의 계좌 목록 조회 (입출금 화면)
+    // 사용자의 계좌 목록 조회 (세션에서 userId 추출)
     @GetMapping
-    public List<AccountDTO> accountsByUserId(@RequestParam String userId) {
-        return accountService.findByUserId(userId);
-    }
-
-    // 계좌 상세 조회
-    @GetMapping("/accounts")
-    public AccountDTO accountDetail(@PathVariable String accountNo) {
-        return accountService.findByAccountNo(accountNo);
+    public List<AccountDTO> accountsByUserId(HttpSession session) {
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+        return accountService.findByUserId(loginUser.getUserId());
     }
 }

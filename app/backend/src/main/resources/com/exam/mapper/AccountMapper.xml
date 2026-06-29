@@ -6,20 +6,20 @@
 
     <select id="findByUserId" resultType="AccountDTO" parameterType="String">
         select account_no   as accountNo,
-               user_id      as userId,
-               account_nm   as accountNm,
-               balance,
-               account_stat as accountStat
+                user_id      as userId,
+                account_nm   as accountNm,
+                balance,
+                account_stat as accountStat
         from accounts_info
         where user_id = #{userId}
     </select>
 
     <select id="findByAccountNo" resultType="AccountDTO" parameterType="String">
         select account_no   as accountNo,
-               user_id      as userId,
-               account_nm   as accountNm,
-               balance,
-               account_stat as accountStat
+                user_id      as userId,
+                account_nm   as accountNm,
+                balance,
+                account_stat as accountStat
         from accounts_info
         where account_no = #{accountNo}
     </select>

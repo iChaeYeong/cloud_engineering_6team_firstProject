@@ -13,7 +13,6 @@ public class DemoApplication {
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
         System.out.println("----------------------------------------------------------");
-        System.out.println("Start With sample13_REST4_Exception_LEE");
-        System.out.println("----------------------------------------------------------");
+
     }
 }

@@ -1,0 +1,130 @@
+# 03-springboot.yaml
+
+# ==================== DEV ====================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-service
+  namespace: dev
+  # dev 환경 스프링부트 서비스
+spec:
+  selector:
+    app: springboot
+  ports:
+    - port: 8080
+      targetPort: 8080  
+  type: ClusterIP  # NodePort 삭제, ClusterIP로 변경
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot
+  template:
+    metadata:
+      labels:
+        app: springboot
+    spec:
+      containers:
+        - name: springboot
+          image: moonjh1/bank-backend:v1    # dev 브랜치 이미지 태그, docker image 이름 변경
+          imagePullPolicy: Always                    # 배포시마다 최신 이미지 확인
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              # 같은 dev 네임스페이스의 mysql-service 로 접근
+              # UTF-8 꺠짐 방지 추가
+              value: jdbc:mysql://mysql-service:3306/findb-dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret        # dev 네임스페이스의 Secret 참조
+                  key: MYSQL_ROOT_PASSWORD
+          livenessProbe:
+            httpGet:
+              #path 주소 변경 /actuator/health -> /healthz
+              path: /healthz        # 스프링 헬스체크 엔드포인트
+              port: 8080
+            initialDelaySeconds: 60         # 스프링 뜨는데 시간 걸려서 넉넉히
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+             #path 주소 변경 /actuator/health -> /healthz
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+
+# ==================== PROD ====================
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-service
+  namespace: prod
+  # prod 환경 스프링부트 서비스
+spec:
+  selector:
+    app: springboot
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP  # NodePort 삭제, ClusterIP로 변경
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot
+  template:
+    metadata:
+      labels:
+        app: springboot
+    spec:
+      containers:
+        - name: springboot
+          image: moonjh1/bank-backend:v1  # docker image 이름 변경
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              # 같은 prod 네임스페이스의 mysql-service 로 접근
+              # UTF-8 꺠짐 방지 추가
+              value: jdbc:mysql://mysql-service:3306/findb-prod?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret        # prod 네임스페이스의 Secret 참조
+                  key: MYSQL_ROOT_PASSWORD
+          livenessProbe:
+            httpGet:
+              #path 주소 변경 /actuator/health -> /healthz
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              #path 주소 변경 /actuator/health -> /healthz
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5

@@ -1,39 +1,62 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type TransactionStatus = "입금" | "출금";
 
-type Transaction = {
-  id: number;
-  time: string;
-  fromAccount: string;
-  toAccount: string;
-  amount: number;
-  status: TransactionStatus;
+type ApiTransaction = {
+  tranId: number;
+  frmAccountNo: string;
+  toAccountNo: string;
+  tranAmt: number;
+  tranDt: string;
 };
 
-const transactions: Transaction[] = [
-  { id: 1, time: "2026-06-26 09:30", fromAccount: "100-200-300001", toAccount: "200-111-900001", amount: 50000, status: "출금" },
-  { id: 2, time: "2026-06-26 10:15", fromAccount: "300-555-100001", toAccount: "100-200-300001", amount: 120000, status: "입금" },
-  { id: 3, time: "2026-06-26 11:40", fromAccount: "100-200-300002", toAccount: "400-222-700001", amount: 30000, status: "출금" },
-  { id: 4, time: "2026-06-26 13:05", fromAccount: "500-888-100001", toAccount: "100-200-300002", amount: 75000, status: "입금" }
-];
-
 export default function TransactionsPage() {
+  const [accountNo, setAccountNo] = useState("110-1234-4444");
+  const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [statusFilter, setStatusFilter] = useState<"전체" | TransactionStatus>("전체");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch(`http://localhost:8080/transactions/${accountNo}`);
+
+      if (!response.ok) {
+        throw new Error("거래내역 조회에 실패했습니다.");
+      }
+
+      const data: ApiTransaction[] = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   const filteredTransactions = useMemo(() => {
     return transactions
-      .filter((transaction) => statusFilter === "전체" || transaction.status === statusFilter)
+      .filter((transaction) => {
+        const status: TransactionStatus = transaction.frmAccountNo === accountNo ? "출금" : "입금";
+        return statusFilter === "전체" || status === statusFilter;
+      })
       .sort((a, b) => {
-        const left = new Date(a.time).getTime();
-        const right = new Date(b.time).getTime();
+        const left = new Date(a.tranDt).getTime();
+        const right = new Date(b.tranDt).getTime();
         return sortOrder === "desc" ? right - left : left - right;
       });
-  }, [statusFilter, sortOrder]);
+  }, [transactions, statusFilter, sortOrder, accountNo]);
 
   return (
     <main className="page">
@@ -53,6 +76,14 @@ export default function TransactionsPage() {
             <p className="muted">입금/출금 상태별 필터와 시간 정렬을 제공합니다.</p>
           </div>
           <div className="filterBox">
+            <input
+              value={accountNo}
+              onChange={(event) => setAccountNo(event.target.value)}
+              placeholder="계좌번호"
+            />
+            <button type="button" onClick={fetchTransactions}>
+              조회
+            </button>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "전체" | TransactionStatus)}>
               <option value="전체">전체</option>
               <option value="입금">입금</option>
@@ -64,6 +95,9 @@ export default function TransactionsPage() {
             </select>
           </div>
         </div>
+
+        {isLoading && <p className="muted">거래내역을 불러오는 중입니다...</p>}
+        {errorMessage && <p className="errorText">{errorMessage}</p>}
 
         <div className="tableWrap">
           <table>
@@ -77,19 +111,23 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td>{transaction.time}</td>
-                  <td>{transaction.fromAccount}</td>
-                  <td>{transaction.toAccount}</td>
-                  <td>{transaction.amount.toLocaleString()}원</td>
-                  <td>
-                    <span className={transaction.status === "입금" ? "statusBadge deposit" : "statusBadge withdraw"}>
-                      {transaction.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {filteredTransactions.map((transaction) => {
+                const status: TransactionStatus = transaction.frmAccountNo === accountNo ? "출금" : "입금";
+
+                return (
+                  <tr key={transaction.tranId}>
+                    <td>{transaction.tranDt}</td>
+                    <td>{transaction.frmAccountNo}</td>
+                    <td>{transaction.toAccountNo}</td>
+                    <td>{transaction.tranAmt.toLocaleString()}원</td>
+                    <td>
+                      <span className={status === "입금" ? "statusBadge deposit" : "statusBadge withdraw"}>
+                        {status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -42,6 +42,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: moonjh1/bank-frontend:${{ env.IMAGE_TAG }}
+          cache-from: type=local,src=/tmp/buildcache/frontend
+          cache-to: type=local,dest=/tmp/buildcache/frontend,mode=max
 
       - name: Build and push backend
         uses: docker/build-push-action@v5
@@ -50,6 +52,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: moonjh1/bank-backend:${{ env.IMAGE_TAG }}
+          cache-from: type=local,src=/tmp/buildcache/backend
+          cache-to: type=local,dest=/tmp/buildcache/backend,mode=max
 
       - name: Deploy to Kubernetes
         run: |

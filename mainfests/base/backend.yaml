@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: springboot
-          image: moonjh1/bank-backend:v1
+          image: moonjh1/bank-backend
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

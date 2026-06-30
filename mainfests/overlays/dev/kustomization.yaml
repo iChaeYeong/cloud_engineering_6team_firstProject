@@ -1,13 +1,15 @@
 namespace: dev
 
+images:
+  - name: moonjh1/bank-frontend
+    newTag: dev
+  - name: moonjh1/bank-backend
+    newTag: dev
+
 resources:
   - ../../base
   - namespace.yaml
   - mysql-pv.yaml
-
-images:
-  - name: moonjh1/bank-frontend
-    newTag: dev
 
 patches:
   - path: patch-mysql-secret.yaml

@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: moonjh1/bank-frontend:prod
+          image: moonjh1/bank-frontend
           imagePullPolicy: Always
           ports:
             - containerPort: 3000

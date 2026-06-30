@@ -1,0 +1,4 @@
+resources:
+  - mysql.yaml
+  - backend.yaml
+  - frontend.yaml

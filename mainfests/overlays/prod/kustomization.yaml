@@ -1,0 +1,13 @@
+namespace: prod
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - mysql-pv.yaml
+
+images:
+  - name: moonjh1/bank-frontend
+    newTag: prod
+
+patches:
+  - path: patch-mysql-secret.yaml

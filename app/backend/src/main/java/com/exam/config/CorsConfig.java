@@ -21,6 +21,8 @@ public class CorsConfig {
 	config.addAllowedOrigin("http://172.16.8.12:30081");
 	config.addAllowedOrigin("http://172.16.8.11:30080");
 	config.addAllowedOrigin("http://172.16.8.12:30080");
+	config.addAllowedOrigin("http://bank-dev.local:31508");
+	config.addAllowedOrigin("http://bank-prod.local:31508");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 

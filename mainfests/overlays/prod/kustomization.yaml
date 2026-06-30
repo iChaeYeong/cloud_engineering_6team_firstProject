@@ -10,6 +10,7 @@ resources:
   - ../../base
   - namespace.yaml
   - mysql-pv.yaml
+  - ingress.yaml
 
 patches:
   - path: patch-mysql-secret.yaml

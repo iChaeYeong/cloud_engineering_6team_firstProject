@@ -34,6 +34,7 @@ export default function LoginPage() {
         <h1 className="authTitle">로그인</h1>
         <p className="authDesc">계좌이체 시스템에 접속합니다.</p>
         <p style={{ color: "red", fontSize: "12px" }}>🚀 CI/CD 배포 테스트 - DEV 브랜치</p>
+        <p style={{ color: "blue", fontSize: "20px" }}>테스트</p>
 
         <div className="field">
           <label className="fieldLabel">아이디</label>

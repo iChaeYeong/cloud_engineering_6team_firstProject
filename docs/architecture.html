@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>6조 거래체 시스템 — K8s 아키텍처</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 40px 20px; }
+    h1 { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #1a202c; }
+    h2 { text-align: center; font-size: 12px; color: #718096; margin-bottom: 32px; }
+
+    .wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+    /* 사용자 */
+    .user-row { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .user-box { background: #fff; border: 2px solid #4a5568; border-radius: 10px; padding: 10px 28px; font-size: 13px; font-weight: 700; }
+    .arrow { text-align: center; font-size: 18px; color: #a0aec0; }
+    .arrow-label { font-size: 10px; color: #a0aec0; margin-top: -4px; }
+    .nodeport-row { display: flex; gap: 12px; justify-content: center; }
+    .np-box { background: #ebf8ff; border: 2px solid #3182ce; border-radius: 8px; padding: 7px 18px; font-size: 11px; font-weight: 600; text-align: center; color: #2b6cb0; }
+
+    /* Ingress */
+    .ingress-ctrl { background: #fff0f6; border: 2.5px solid #d53f8c; border-radius: 10px; padding: 10px 28px; font-size: 12px; font-weight: 700; color: #97266d; text-align: center; }
+    .ingress-ctrl-sub { font-size: 10px; color: #b83280; font-weight: 400; margin-top: 3px; }
+    .ingress-routes { display: flex; gap: 12px; justify-content: center; }
+    .ingress-route { background: #fff0f6; border: 1.5px solid #d53f8c; border-radius: 8px; padding: 7px 16px; font-size: 10px; font-weight: 600; text-align: center; color: #97266d; }
+
+    /* VMware */
+    .vmware { border: 2.5px dashed #a0aec0; border-radius: 16px; padding: 22px; background: #f7fafc; }
+    .vmware-label { font-size: 11px; font-weight: 700; color: #718096; margin-bottom: 14px; }
+    .vmware-inner { display: flex; gap: 12px; align-items: flex-start; }
+
+    /* CI/CD */
+    .cicd { border: 2.5px solid #9f7aea; border-radius: 14px; padding: 14px; background: #faf5ff; width: 165px; flex-shrink: 0; }
+    .cicd-title { font-size: 11px; font-weight: 700; color: #6b46c1; margin-bottom: 10px; text-align: center; }
+    .ci-item { background: #fff; border: 1.5px solid #d6bcfa; border-radius: 7px; padding: 7px 8px; font-size: 10px; margin-bottom: 5px; text-align: center; }
+    .ci-item b { color: #6b46c1; }
+    .ci-arrow { text-align: center; font-size: 10px; color: #9f7aea; margin: 2px 0; }
+    .kz-box { background: #e9d8fd; border: 2px solid #805ad5; border-radius: 7px; padding: 8px; font-size: 10px; margin-bottom: 5px; text-align: center; }
+    .kz-title { font-weight: 700; color: #553c9a; font-size: 11px; margin-bottom: 4px; }
+    .kz-tags { display: flex; gap: 3px; justify-content: center; margin-top: 4px; }
+    .kz-tag { background: #fff; border: 1px solid #b794f4; border-radius: 3px; padding: 1px 4px; font-size: 9px; color: #553c9a; font-weight: 600; }
+    .kz-sub { font-size: 9px; color: #6b46c1; margin-top: 4px; }
+
+    /* K8s Cluster */
+    .cluster { border: 2.5px solid #3182ce; border-radius: 14px; padding: 16px; background: #ebf8ff; flex: 1; }
+    .cluster-label { font-size: 11px; font-weight: 700; color: #2b6cb0; margin-bottom: 12px; }
+    .cluster-inner { display: flex; gap: 10px; align-items: flex-start; }
+
+    /* Control Plane */
+    .cp { border: 2px solid #4a5568; border-radius: 10px; padding: 11px; background: #fff; width: 128px; flex-shrink: 0; }
+    .cp-title { font-size: 10px; font-weight: 700; color: #2d3748; text-align: center; margin-bottom: 8px; }
+    .cp-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3px 6px; font-size: 9px; color: #4a5568; margin-bottom: 3px; }
+    .pv-box { border: 1.5px dashed #d69e2e; border-radius: 6px; padding: 6px; margin-top: 8px; background: #fffff0; }
+    .pv-title { font-size: 9px; font-weight: 700; color: #975a16; text-align: center; margin-bottom: 4px; }
+    .pv-item { background: #fefcbf; border: 1px solid #f6e05e; border-radius: 3px; padding: 2px 5px; font-size: 9px; text-align: center; color: #744210; margin-bottom: 2px; }
+
+    /* Ingress */
+    .ingress-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 4px; }
+    .ingress-box { background: #fff5f0; border: 2px solid #e53e3e; border-radius: 8px; padding: 8px 14px; font-size: 10px; font-weight: 600; text-align: center; color: #c53030; }
+    .ingress-label { font-size: 9px; color: #718096; font-weight: 400; margin-top: 2px; }
+    .ingress-planned { border-style: dashed; background: #fff5f0; color: #c53030; }
+
+    /* Services 레이어 */
+    .svc-layer { margin-bottom: 10px; }
+    .svc-layer-title { font-size: 9px; color: #718096; margin-bottom: 5px; font-weight: 600; }
+    .svc-ns-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; }
+    .ns-label-sm { font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; width: 36px; text-align: center; flex-shrink: 0; }
+    .ns-label-dev { background: #38a169; color: #fff; }
+    .ns-label-prod { background: #dd6b20; color: #fff; }
+    .svc-mini { border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 600; text-align: center; flex: 1; }
+    .svc-blue { background: #bee3f8; color: #2c5282; border: 1px solid #90cdf4; }
+    .svc-green { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    .svc-orange { background: #feebc8; color: #7b341e; border: 1px solid #fbd38d; }
+
+    /* 노드 영역 */
+    .nodes-area { display: flex; gap: 10px; flex: 1; }
+    .node-box { border: 2.5px solid #4a5568; border-radius: 12px; padding: 12px; background: #fff; flex: 1; }
+    .node-title { font-size: 11px; font-weight: 700; color: #2d3748; background: #edf2f7; border-radius: 6px; padding: 4px 8px; margin-bottom: 10px; text-align: center; }
+
+    /* 노드 안 네임스페이스 */
+    .ns-in-node { border-radius: 8px; padding: 9px; margin-bottom: 8px; }
+    .ns-dev-in { background: #f0fff4; border: 1.5px solid #38a169; }
+    .ns-prod-in { background: #fffaf0; border: 1.5px solid #dd6b20; }
+    .ns-in-title { font-size: 9px; font-weight: 700; margin-bottom: 7px; display: flex; align-items: center; gap: 5px; }
+    .ns-badge-dev { background: #38a169; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 9px; }
+    .ns-badge-prod { background: #dd6b20; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 9px; }
+    .pods-list { display: flex; flex-direction: column; gap: 5px; }
+    .pod { border-radius: 6px; padding: 6px 7px; font-size: 10px; border: 1.5px solid; }
+    .pod-blue { background: #ebf8ff; border-color: #3182ce; }
+    .pod-green { background: #f0fff4; border-color: #38a169; }
+    .pod-orange { background: #fffaf0; border-color: #dd6b20; }
+    .pod-orange-dash { background: #fff8f8; border: 1.5px dashed #fc8181; }
+    .pod-name { font-weight: 700; font-size: 10px; }
+    .pod-tag { font-size: 9px; color: #718096; }
+    .proxy-badge { display: inline-block; background: #e9d8fd; border-radius: 3px; padding: 1px 4px; font-size: 8px; color: #6b46c1; margin-top: 2px; }
+    .pvc-badge { display: inline-block; background: #fefcbf; border: 1px solid #f6e05e; border-radius: 3px; padding: 1px 4px; font-size: 8px; color: #744210; margin-top: 2px; }
+    .failover-badge { display: inline-block; background: #fff5f5; border: 1px dashed #fc8181; border-radius: 3px; padding: 1px 4px; font-size: 8px; color: #c53030; margin-top: 2px; }
+
+    /* 노드간 화살표 */
+    .between-nodes { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 4px; gap: 10px; }
+    .traffic-tag { font-size: 9px; font-weight: 600; background: #e2e8f0; border-radius: 4px; padding: 3px 5px; color: #4a5568; text-align: center; }
+    .failover-tag { font-size: 9px; font-weight: 600; background: #fff5f5; border: 1px dashed #fc8181; border-radius: 4px; padding: 3px 5px; color: #c53030; text-align: center; }
+    .big-arrow { font-size: 16px; color: #a0aec0; }
+
+    /* NFS */
+    .nfs { border: 2px solid #d69e2e; border-radius: 10px; padding: 12px; background: #fffff0; width: 105px; flex-shrink: 0; }
+    .nfs-title { font-size: 10px; font-weight: 700; color: #975a16; text-align: center; margin-bottom: 8px; }
+    .nfs-item { background: #fefcbf; border: 1px solid #f6e05e; border-radius: 4px; padding: 4px 6px; font-size: 9px; text-align: center; margin-bottom: 4px; color: #744210; }
+    .nfs-arr { text-align: center; font-size: 10px; color: #d69e2e; margin: 2px 0; }
+
+    /* 범례 */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #4a5568; }
+    .ldot { width: 12px; height: 12px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>6조 거래체 시스템 — K8s 아키텍처</h1>
+  <h2>실제 구성 기준</h2>
+
+  <div class="wrap">
+
+    <!-- 사용자 -->
+    <div class="user-row">
+      <div class="user-box">👤 사용자 (외부 접근)</div>
+      <div class="arrow">↓</div>
+
+      <!-- NGINX Ingress Controller -->
+      <div class="ingress-ctrl">
+        🌐 NGINX Ingress Controller
+        <div class="ingress-ctrl-sub">ingressClassName: nginx &nbsp;|&nbsp; NodePort :80 / :443</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">Host 헤더 기반 라우팅</div>
+
+      <!-- Ingress 라우팅 규칙 -->
+      <div class="ingress-routes">
+        <div class="ingress-route">
+          🟢 bank-dev.local<br>
+          <span style="font-size:9px">→ dev / frontend-service:3000</span>
+        </div>
+        <div class="ingress-route">
+          🟠 bank-prod.local<br>
+          <span style="font-size:9px">→ prod / frontend-service:3000</span>
+        </div>
+      </div>
+      <div class="arrow">↓</div>
+    </div>
+
+    <!-- VMware -->
+    <div class="vmware">
+      <div class="vmware-label">🖥️ VMware Virtual Environment</div>
+      <div class="vmware-inner">
+
+        <!-- CI/CD -->
+        <div class="cicd">
+          <div class="cicd-title">⚙️ GitHub Actions CI/CD</div>
+          <div class="ci-item">📦 GitHub Repository<br><b>dev</b> / <b>main</b> 브랜치</div>
+          <div class="ci-arrow">↓ push 감지</div>
+          <div class="ci-item">🏃 Self-hosted Runner<br><b>master (172.16.8.10)</b></div>
+          <div class="ci-arrow">↓ build & push</div>
+          <div class="ci-item">🐳 Docker Hub<br><b>:dev</b> / <b>:latest</b></div>
+          <div class="ci-arrow">↓ kubectl apply -k</div>
+          <div class="kz-box">
+            <div class="kz-title">🗂️ Kustomize</div>
+            <div class="kz-tags">
+              <div class="kz-tag">overlays/dev/</div>
+              <div class="kz-tag">overlays/prod/</div>
+            </div>
+            <div class="kz-sub">이미지태그·NodePort·DB명<br>환경별 분리</div>
+          </div>
+          <div class="ci-arrow">↓ 환경별 자동 배포</div>
+          <div class="ci-item" style="font-size:9px;">
+            dev push → <b>dev ns</b><br>
+            main push → <b>prod ns</b>
+          </div>
+        </div>
+
+        <!-- K8s Cluster -->
+        <div class="cluster">
+          <div class="cluster-label">☸️ Kubernetes Cluster</div>
+          <div class="cluster-inner">
+
+            <!-- Control Plane -->
+            <div class="cp">
+              <div class="cp-title">Control Plane<br><span style="font-size:9px;color:#718096">master (172.16.8.10)</span></div>
+              <div class="cp-item">⚙ kube-apiserver</div>
+              <div class="cp-item">📦 etcd</div>
+              <div class="cp-item">📅 scheduler</div>
+              <div class="cp-item">🔧 controller-manager</div>
+              <div class="pv-box">
+                <div class="pv-title">PV (클러스터 레벨)</div>
+                <div class="pv-item">mysql-pv-dev 5Gi</div>
+                <div class="pv-item">mysql-pv-prod 10Gi</div>
+              </div>
+            </div>
+
+            <!-- 오른쪽: Services + Nodes -->
+            <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+
+              <!-- Services 레이어 -->
+              <div class="svc-layer">
+                <div class="svc-layer-title">Services (논리 레이어)</div>
+                <div class="svc-ns-row">
+                  <div class="ns-label-sm ns-label-dev">dev</div>
+                  <div class="svc-mini svc-blue" style="border-color:#d53f8c;">frontend-service<br><span style="font-size:8px;color:#97266d">← Ingress: bank-dev.local</span><br>NodePort :30081</div>
+                  <div class="svc-mini svc-green">springboot-service<br>ClusterIP :8080</div>
+                  <div class="svc-mini svc-orange">mysql-service<br>ClusterIP :3306</div>
+                </div>
+                <div class="svc-ns-row">
+                  <div class="ns-label-sm ns-label-prod">prod</div>
+                  <div class="svc-mini svc-blue" style="border-color:#d53f8c;">frontend-service<br><span style="font-size:8px;color:#97266d">← Ingress: bank-prod.local</span><br>NodePort :30080</div>
+                  <div class="svc-mini svc-green">springboot-service<br>ClusterIP :8080</div>
+                  <div class="svc-mini svc-orange">mysql-service<br>ClusterIP :3306</div>
+                </div>
+              </div>
+
+              <!-- Worker Nodes -->
+              <div class="nodes-area">
+
+                <!-- Node 1 -->
+                <div class="node-box">
+                  <div class="node-title">🖥 Worker Node 1 (172.16.8.11)</div>
+
+                  <!-- dev in node1 -->
+                  <div class="ns-in-node ns-dev-in">
+                    <div class="ns-in-title">
+                      <span class="ns-badge-dev">dev</span> namespace: dev
+                    </div>
+                    <div class="pods-list">
+                      <div class="pod pod-blue">
+                        <div class="pod-name">🔵 Frontend Pod</div>
+                        <div class="pod-tag">bank-frontend:dev</div>
+                        <div><span class="proxy-badge">/api/* → springboot:8080</span></div>
+                      </div>
+                      <div class="pod pod-green">
+                        <div class="pod-name">🟢 Backend Pod</div>
+                        <div class="pod-tag">bank-backend:dev</div>
+                      </div>
+                      <div class="pod pod-orange">
+                        <div class="pod-name">🟠 MySQL Pod</div>
+                        <div class="pod-tag">findb-dev</div>
+                        <div><span class="pvc-badge">PVC: mysql-pvc</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- prod in node1 -->
+                  <div class="ns-in-node ns-prod-in">
+                    <div class="ns-in-title">
+                      <span class="ns-badge-prod">prod</span> namespace: prod
+                    </div>
+                    <div class="pods-list">
+                      <div class="pod pod-blue">
+                        <div class="pod-name">🔵 Frontend Pod</div>
+                        <div class="pod-tag">bank-frontend:latest</div>
+                        <div><span class="proxy-badge">/api/* → springboot:8080</span></div>
+                      </div>
+                      <div class="pod pod-green">
+                        <div class="pod-name">🟢 Backend Pod</div>
+                        <div class="pod-tag">bank-backend:latest</div>
+                      </div>
+                      <div class="pod pod-orange-dash">
+                        <div class="pod-name">🟠 MySQL Pod</div>
+                        <div class="pod-tag">장애 발생시 이동</div>
+                        <div><span class="failover-badge">⚠ Failover</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 노드 사이 화살표 -->
+                <div class="between-nodes">
+                  <div class="traffic-tag">↔<br>트래픽<br>분산</div>
+                  <div class="big-arrow">⟷</div>
+                  <div class="failover-tag">장애시<br>MySQL<br>이동</div>
+                </div>
+
+                <!-- Node 2 -->
+                <div class="node-box">
+                  <div class="node-title">🖥 Worker Node 2 (172.16.8.12)</div>
+
+                  <!-- dev in node2 -->
+                  <div class="ns-in-node ns-dev-in">
+                    <div class="ns-in-title">
+                      <span class="ns-badge-dev">dev</span> namespace: dev
+                    </div>
+                    <div class="pods-list">
+                      <div class="pod pod-blue">
+                        <div class="pod-name">🔵 Frontend Pod</div>
+                        <div class="pod-tag">bank-frontend:dev</div>
+                        <div><span class="proxy-badge">/api/* → springboot:8080</span></div>
+                      </div>
+                      <div class="pod pod-green">
+                        <div class="pod-name">🟢 Backend Pod</div>
+                        <div class="pod-tag">bank-backend:dev</div>
+                      </div>
+                      <div class="pod pod-orange-dash">
+                        <div class="pod-name">🟠 MySQL Pod</div>
+                        <div class="pod-tag">장애 발생시 이동</div>
+                        <div><span class="failover-badge">⚠ Failover</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- prod in node2 -->
+                  <div class="ns-in-node ns-prod-in">
+                    <div class="ns-in-title">
+                      <span class="ns-badge-prod">prod</span> namespace: prod
+                    </div>
+                    <div class="pods-list">
+                      <div class="pod pod-blue">
+                        <div class="pod-name">🔵 Frontend Pod</div>
+                        <div class="pod-tag">bank-frontend:latest</div>
+                        <div><span class="proxy-badge">/api/* → springboot:8080</span></div>
+                      </div>
+                      <div class="pod pod-green">
+                        <div class="pod-name">🟢 Backend Pod</div>
+                        <div class="pod-tag">bank-backend:latest</div>
+                      </div>
+                      <div class="pod pod-orange">
+                        <div class="pod-name">🟠 MySQL Pod</div>
+                        <div class="pod-tag">findb</div>
+                        <div><span class="pvc-badge">PVC: mysql-pvc</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- NFS -->
+            <div class="nfs">
+              <div class="nfs-title">💾 External Storage</div>
+              <div class="nfs-item">NFS Server<br>172.16.8.20</div>
+              <div class="nfs-arr">↕ NFS</div>
+              <div class="nfs-item">/nfs/data/dev</div>
+              <div class="nfs-arr">↕</div>
+              <div class="nfs-item">/nfs/data/prod</div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 범례 -->
+    <div class="legend">
+      <div class="legend-item"><div class="ldot" style="background:#ebf8ff;border:1.5px solid #3182ce;"></div> Frontend Pod</div>
+      <div class="legend-item"><div class="ldot" style="background:#f0fff4;border:1.5px solid #38a169;"></div> Backend Pod</div>
+      <div class="legend-item"><div class="ldot" style="background:#fffaf0;border:1.5px solid #dd6b20;"></div> MySQL Pod (기본)</div>
+      <div class="legend-item"><div class="ldot" style="background:#fff8f8;border:1.5px dashed #fc8181;"></div> MySQL Pod (Failover)</div>
+      <div class="legend-item"><div class="ldot" style="background:#f0fff4;border:1.5px solid #38a169;"></div> namespace: dev</div>
+      <div class="legend-item"><div class="ldot" style="background:#fffaf0;border:1.5px solid #dd6b20;"></div> namespace: prod</div>
+      <div class="legend-item"><div class="ldot" style="background:#e9d8fd;border:1px solid #b794f4;"></div> Kustomize / /api 프록시</div>
+      <div class="legend-item"><div class="ldot" style="background:#fefcbf;border:1px solid #f6e05e;"></div> PV / NFS Storage</div>
+      <div class="legend-item"><div class="ldot" style="background:#fff0f6;border:2px solid #d53f8c;"></div> NGINX Ingress (Host 라우팅)</div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>화면 정의서 — 계좌이체 시스템</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6fa; color: #1a1a2e; }
+
+    header { background: #1a1a2e; color: #fff; padding: 28px 40px; }
+    header h1 { font-size: 22px; font-weight: 700; }
+    header p { font-size: 13px; color: #aab; margin-top: 4px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+    .toc { background: #fff; border-radius: 10px; padding: 20px 28px; margin-bottom: 40px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .toc h2 { font-size: 14px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    .toc ol { padding-left: 20px; line-height: 2; }
+    .toc a { color: #4361ee; text-decoration: none; font-size: 14px; }
+    .toc a:hover { text-decoration: underline; }
+
+    .screen { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 40px; overflow: hidden; }
+    .screen-header { background: #4361ee; color: #fff; padding: 18px 28px; display: flex; align-items: center; gap: 14px; }
+    .screen-header .badge { background: rgba(255,255,255,.2); border-radius: 4px; font-size: 11px; padding: 2px 8px; font-weight: 600; letter-spacing: .04em; }
+    .screen-header h2 { font-size: 17px; font-weight: 700; }
+    .screen-header .path { font-size: 12px; color: rgba(255,255,255,.7); margin-left: auto; font-family: monospace; }
+
+    .screen-body { padding: 28px; }
+
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .meta-item { background: #f8f9ff; border-radius: 8px; padding: 12px 16px; }
+    .meta-item .label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .04em; }
+    .meta-item .value { font-size: 13px; color: #1a1a2e; margin-top: 4px; font-weight: 500; }
+
+    .section-title { font-size: 13px; font-weight: 700; color: #444; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+    th { background: #f0f2ff; text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; color: #555; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    .tag { display: inline-block; border-radius: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; }
+    .tag-req  { background: #fff0f0; color: #e63946; }
+    .tag-opt  { background: #f0f8ff; color: #4361ee; }
+    .tag-info { background: #f0fff4; color: #2d9d57; }
+
+    .flow { background: #f8f9ff; border-radius: 8px; padding: 16px 20px; font-family: monospace; font-size: 13px; line-height: 1.9; color: #444; margin-bottom: 0; white-space: pre; overflow-x: auto; }
+
+    .img-preview { text-align: center; margin: 20px 0; }
+    .img-preview img { max-width: 100%; border-radius: 8px; border: 1px solid #eee; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>화면 정의서</h1>
+  <p>계좌이체 시스템 — 클라우드 엔지니어링 6조 1차 프로젝트</p>
+</header>
+
+<div class="container">
+
+  <!-- 화면 미리보기 -->
+  <div class="toc">
+    <h2>화면 목록</h2>
+    <ol>
+      <li><a href="#login">로그인</a></li>
+      <li><a href="#signup">회원가입</a></li>
+      <li><a href="#accounts">계좌 목록</a></li>
+      <li><a href="#transfer">계좌 이체</a></li>
+      <li><a href="#transactions">거래 내역</a></li>
+    </ol>
+  </div>
+
+  <div class="img-preview">
+    <img src="화면정의서.png" alt="화면 정의서 전체" />
+  </div>
+
+  <!-- 1. 로그인 -->
+  <div class="screen" id="login">
+    <div class="screen-header">
+      <span class="badge">SCR-01</span>
+      <h2>로그인</h2>
+      <span class="path">/login</span>
+    </div>
+    <div class="screen-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="label">URL</div><div class="value">/login</div></div>
+        <div class="meta-item"><div class="label">접근 권한</div><div class="value">비로그인 (기본 진입점)</div></div>
+        <div class="meta-item"><div class="label">인증 방식</div><div class="value">HTTP Session (쿠키)</div></div>
+        <div class="meta-item"><div class="label">API</div><div class="value">POST /auth/login</div></div>
+      </div>
+
+      <p class="section-title">입력 요소</p>
+      <table>
+        <tr><th>컴포넌트</th><th>타입</th><th>필수</th><th>설명</th></tr>
+        <tr><td>아이디</td><td>text input</td><td><span class="tag tag-req">필수</span></td><td>user_info.user_id에 매핑</td></tr>
+        <tr><td>비밀번호</td><td>password input</td><td><span class="tag tag-req">필수</span></td><td>BCrypt 해시 비교, Enter 키로 제출 가능</td></tr>
+        <tr><td>로그인 버튼</td><td>button</td><td>—</td><td>처리 중 비활성화, 스피너 텍스트 표시</td></tr>
+        <tr><td>회원가입 링크</td><td>Link</td><td>—</td><td>/signup 이동</td></tr>
+      </table>
+
+      <p class="section-title">동작 흐름</p>
+      <pre class="flow">입력 검증 (빈 값) → POST /auth/login → 세션 저장
+  ├── 성공: /accounts 리디렉트
+  └── 실패: 에러 메시지 표시 ("아이디 또는 비밀번호가 올바르지 않습니다.")</pre>
+    </div>
+  </div>
+
+  <!-- 2. 회원가입 -->
+  <div class="screen" id="signup">
+    <div class="screen-header">
+      <span class="badge">SCR-02</span>
+      <h2>회원가입</h2>
+      <span class="path">/signup</span>
+    </div>
+    <div class="screen-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="label">URL</div><div class="value">/signup</div></div>
+        <div class="meta-item"><div class="label">접근 권한</div><div class="value">비로그인</div></div>
+        <div class="meta-item"><div class="label">API</div><div class="value">POST /auth/register</div></div>
+      </div>
+
+      <p class="section-title">입력 요소</p>
+      <table>
+        <tr><th>컴포넌트</th><th>타입</th><th>필수</th><th>설명</th></tr>
+        <tr><td>아이디</td><td>text input</td><td><span class="tag tag-req">필수</span></td><td>user_id (VARCHAR 20)</td></tr>
+        <tr><td>이름</td><td>text input</td><td><span class="tag tag-req">필수</span></td><td>user_nm (VARCHAR 20)</td></tr>
+        <tr><td>비밀번호</td><td>password input</td><td><span class="tag tag-req">필수</span></td><td>저장 시 BCrypt 해시 적용</td></tr>
+        <tr><td>회원가입 버튼</td><td>button</td><td>—</td><td>처리 중 비활성화</td></tr>
+      </table>
+
+      <p class="section-title">동작 흐름</p>
+      <pre class="flow">POST /auth/register
+  ├── 성공: /login 리디렉트 (성공 메시지)
+  └── 실패: 에러 메시지 표시 (중복 아이디 등)</pre>
+    </div>
+  </div>
+
+  <!-- 3. 계좌 목록 -->
+  <div class="screen" id="accounts">
+    <div class="screen-header">
+      <span class="badge">SCR-03</span>
+      <h2>계좌 목록</h2>
+      <span class="path">/accounts</span>
+    </div>
+    <div class="screen-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="label">URL</div><div class="value">/accounts</div></div>
+        <div class="meta-item"><div class="label">접근 권한</div><div class="value">로그인 필요</div></div>
+        <div class="meta-item"><div class="label">API</div><div class="value">GET /accounts/list</div></div>
+      </div>
+
+      <p class="section-title">표시 요소</p>
+      <table>
+        <tr><th>요소</th><th>설명</th></tr>
+        <tr><td>총 보유자산</td><td>계좌 잔액 합산, 계좌가 1개 이상일 때만 표시</td></tr>
+        <tr><td>계좌 카드 목록</td><td>계좌명 / 계좌번호 / 상태 배지 / 잔액</td></tr>
+        <tr><td>내역 버튼</td><td>/transactions?account={accountNo} 이동</td></tr>
+        <tr><td>이체 버튼</td><td>/transfer?from={accountNo} 이동</td></tr>
+      </table>
+
+      <p class="section-title">동작 흐름</p>
+      <pre class="flow">페이지 마운트 → GET /accounts/list
+  ├── 성공: 계좌 목록 렌더링
+  └── 인증 실패 (401): /login 리디렉트</pre>
+    </div>
+  </div>
+
+  <!-- 4. 계좌 이체 -->
+  <div class="screen" id="transfer">
+    <div class="screen-header">
+      <span class="badge">SCR-04</span>
+      <h2>계좌 이체</h2>
+      <span class="path">/transfer</span>
+    </div>
+    <div class="screen-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="label">URL</div><div class="value">/transfer?from={accountNo}</div></div>
+        <div class="meta-item"><div class="label">접근 권한</div><div class="value">로그인 필요</div></div>
+        <div class="meta-item"><div class="label">API</div><div class="value">POST /accounts/transfer</div></div>
+      </div>
+
+      <p class="section-title">입력 요소</p>
+      <table>
+        <tr><th>컴포넌트</th><th>타입</th><th>필수</th><th>설명</th></tr>
+        <tr><td>출금 계좌</td><td>select</td><td><span class="tag tag-req">필수</span></td><td>내 계좌 목록 드롭다운, 현재 잔액 표시</td></tr>
+        <tr><td>입금 계좌번호</td><td>text input</td><td><span class="tag tag-req">필수</span></td><td>수취인 계좌번호 직접 입력</td></tr>
+        <tr><td>이체 금액</td><td>number input</td><td><span class="tag tag-req">필수</span></td><td>양수, tabular-nums 폰트</td></tr>
+        <tr><td>이체하기 버튼</td><td>button</td><td>—</td><td>처리 중 비활성화</td></tr>
+        <tr><td>취소 링크</td><td>Link</td><td>—</td><td>/accounts 이동</td></tr>
+      </table>
+
+      <p class="section-title">동작 흐름</p>
+      <pre class="flow">입력 검증 (빈 값 / 금액 유효성) → POST /accounts/transfer
+  ├── 성공: /accounts 리디렉트
+  └── 실패: 에러 메시지 표시 (잔액 부족 등)</pre>
+    </div>
+  </div>
+
+  <!-- 5. 거래 내역 -->
+  <div class="screen" id="transactions">
+    <div class="screen-header">
+      <span class="badge">SCR-05</span>
+      <h2>거래 내역</h2>
+      <span class="path">/transactions</span>
+    </div>
+    <div class="screen-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="label">URL</div><div class="value">/transactions?account={accountNo}</div></div>
+        <div class="meta-item"><div class="label">접근 권한</div><div class="value">로그인 필요</div></div>
+        <div class="meta-item"><div class="label">API</div><div class="value">GET /transactions/history?accountNo=</div></div>
+      </div>
+
+      <p class="section-title">표시 요소</p>
+      <table>
+        <tr><th>컬럼</th><th>설명</th></tr>
+        <tr><td>거래 일시</td><td>tran_dt (DATETIME)</td></tr>
+        <tr><td>출금 계좌</td><td>frm_account_no</td></tr>
+        <tr><td>입금 계좌</td><td>to_account_no</td></tr>
+        <tr><td>거래 금액</td><td>tran_amt (천단위 콤마)</td></tr>
+      </table>
+
+      <p class="section-title">동작 흐름</p>
+      <pre class="flow">쿼리파라미터 account 읽기 → GET /transactions/history?accountNo={account}
+  ├── 성공: 거래 내역 테이블 렌더링
+  └── 내역 없음: "거래 내역이 없습니다." 메시지</pre>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
